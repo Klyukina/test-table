@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 const Editor = ({ text, onClick }) => {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
 
   useEffect(() => {
     setInputValue(text);
@@ -13,7 +13,7 @@ const Editor = ({ text, onClick }) => {
 
   const handleSave = () => {
     onClick(inputValue);
-    setInputValue('');
+    setInputValue("");
   };
 
   return (

@@ -6,7 +6,7 @@
  * 5. Оптимизировать код, перерисовываться должна только выделенная ячейка и та, что была выделена до нее +
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Item from "./Item";
 import Editor from "./Editor";
 import "./styles.css";
@@ -21,20 +21,20 @@ export default function App() {
   const [selectedCellValue, setSelectedCellValue] = useState('')
 
   // добавить строку
-  const increaseRows = () => {
+  const increaseRows = useCallback(() => {
     setRows(prevRows => [...prevRows, _.last(prevRows) + 1]);
-  }
+  }, []);
 
   // добавить колонку
-  const increaseColumns = () => {
+  const increaseColumns = useCallback(() => {
     setColumns(prevColumns => [...prevColumns, _.last(prevColumns) + 1]);
-  }
+  }, []);
 
   // сохранить параметры выделенной ячейки при клике на неё
-  const handleClickCell = (rowIndex, columnIndex) => {
+  const handleClickCell = useCallback((rowIndex, columnIndex) => {
     setPrevSelectedCell(selectedCell);
     setSelectedCell({ rowIndex, columnIndex });
-  };
+  }, [selectedCell]);
 
   // получить значение выделенной ячейки
   useEffect(() => {
@@ -42,14 +42,18 @@ export default function App() {
   }, [selectedCell]);
 
   // изменить значение выделенной ячейки
-  const handleSave = (text) => {
-    const cellKey = `${selectedCell?.rowIndex}-${selectedCell?.columnIndex}`;
-    const prevCellKey = `${prevSelectedCell?.rowIndex}-${prevSelectedCell?.columnIndex}`;
-    setData((prevData) => ({ ...prevData, [cellKey]: text }));
+  const handleSave = useCallback(
+    (text) => {
+      const cellKey = `${selectedCell?.rowIndex}-${selectedCell?.columnIndex}`;
+      const prevCellKey = `${prevSelectedCell?.rowIndex}-${prevSelectedCell?.columnIndex}`;
+      setData((prevData) => ({ ...prevData, [cellKey]: text }));
 
-    // изменить значение ячейки, которая была выделена до текущей
-    setData((prevData) => ({ ...prevData, [prevCellKey]: text }));
-  };
+      if (prevCellKey !== cellKey) {
+        setData((prevData) => ({ ...prevData, [prevCellKey]: text }));
+      }
+    },
+    [selectedCell, prevSelectedCell]
+  );
 
   return (
     <div className="App">
@@ -58,7 +62,7 @@ export default function App() {
       <div className="list">
         <div className="header">
           {_.map(columns, (j) => (
-            <div className="column">{j}</div>
+            <div key={j} className="column">{j}</div>
           ))}
           <button onClick={increaseColumns} className="column-add">+</button>
         </div>
@@ -67,6 +71,7 @@ export default function App() {
             <div className="row-index">{i}</div>
             {_.map(columns, (j) => (
               <Item
+                key={`${i}-${j}`}
                 text={data[`${i}-${j}`]}
                 rowIndex={i}
                 columnIndex={j}
